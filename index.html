@@ -1,0 +1,794 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plant, Set & Forget — Hawaiʻi Zone Finder</title>
+<style>
+:root {
+  /* Tinted neutrals — cool-warm basalt, not pure gray */
+  --ink-900: #1a2620;
+  --ink-800: #2a3a32;
+  --ink-700: #3d4d44;
+  --ink-600: #57675e;
+  --ink-500: #6e7d74;
+  --ink-400: #8a9690;
+  --ground-50: #f4f6f3;
+  --ground-100: #e9ece7;
+  --ground-200: #d6ddd6;
+  /* Committed accent — deep volcanic canopy */
+  --moss-700: #2e4a37;
+  --moss-600: #3b5d45;
+  --moss-300: #8fae98;
+  --moss-100: #dfeae0;
+  --moss-50: #eff5ef;
+  /* role */
+  --accent: var(--moss-700);
+  --accent-soft: var(--moss-100);
+  --ink: var(--ink-900);
+  --rule: var(--ground-200);
+  --radius: 4px;
+  --serif: ui-serif, Georgia, 'Times New Roman', serif;
+  --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--ground-50);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.6;
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.shell {
+  max-width: 680px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 48px 24px 80px;
+  flex: 1 0 auto;
+}
+
+/* Masthead */
+.masthead {
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 24px;
+  margin-bottom: 32px;
+}
+
+.masthead h1 {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 600;
+  margin: 0 0 8px;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.masthead .orient {
+  margin: 0;
+  color: var(--ink-600);
+  font-size: 15px;
+  max-width: 56ch;
+}
+
+.masthead .orient em {
+  font-style: italic;
+  color: var(--ink-700);
+}
+
+/* Finder */
+.finder {
+  margin-bottom: 32px;
+}
+
+.finder label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-700);
+  margin-bottom: 8px;
+}
+
+.finder-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+#query {
+  flex: 1 1 280px;
+  font-family: var(--sans);
+  font-size: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--ground-200);
+  border-radius: var(--radius);
+  background: #fff;
+  color: var(--ink-900);
+  min-width: 0;
+}
+#query:focus {
+  outline: 2px solid var(--moss-300);
+  outline-offset: 1px;
+  border-color: var(--moss-300);
+}
+#query::placeholder { color: var(--ink-500); }
+
+#find-btn {
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 500;
+  padding: 12px 20px;
+  background: var(--accent);
+  color: #fff;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background 160ms ease-out, border-color 160ms ease-out;
+  -webkit-appearance: none;
+  appearance: none;
+}
+#find-btn:hover { background: var(--moss-600); border-color: var(--moss-600); }
+#find-btn:active { background: var(--ink-800); }
+#find-btn:focus-visible {
+  outline: 2px solid var(--moss-300);
+  outline-offset: 2px;
+}
+
+.finder-hint {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--ink-500);
+}
+
+/* State */
+.state {
+  display: none;
+  animation: rise 240ms ease-out both;
+}
+.state.live { display: block; }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .state { animation: none; }
+  * { transition: none !important; }
+}
+
+/* Zone card */
+.zone-card {
+  background: #fff;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 28px 28px 24px;
+}
+
+.zone-marker {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 5px 10px;
+  border-radius: 2px;
+  margin-bottom: 14px;
+}
+
+.zone-name {
+  font-family: var(--serif);
+  font-size: 30px;
+  font-weight: 600;
+  margin: 0 0 6px;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+  color: var(--ink-900);
+}
+
+.zone-tag {
+  margin: 0 0 20px;
+  color: var(--ink-600);
+  font-size: 15px;
+}
+
+.conditions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px 24px;
+  padding: 16px 0;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 24px;
+}
+
+.cond dt {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-500);
+  margin-bottom: 3px;
+  letter-spacing: 0.02em;
+}
+
+.cond dd {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink-800);
+  font-weight: 500;
+}
+
+.provenance {
+  font-size: 13px;
+  color: var(--ink-700);
+  margin: 0 0 24px;
+  font-style: italic;
+}
+
+.crops-heading {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-700);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin: 0 0 14px;
+}
+
+.crop {
+  padding: 20px 0;
+  border-bottom: 1px solid var(--ground-100);
+}
+.crop:last-child { border-bottom: none; padding-bottom: 4px; }
+.crop:first-of-type { padding-top: 4px; }
+
+.crop-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.crop-name {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--ink-900);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.crop-latin {
+  font-style: italic;
+  font-size: 14px;
+  color: var(--ink-500);
+}
+
+.crop-tag {
+  font-size: 13px;
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.crop p.note {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: var(--ink-700);
+  line-height: 1.55;
+}
+
+.crop ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.crop ul li {
+  position: relative;
+  padding-left: 16px;
+  margin-bottom: 6px;
+  font-size: 14px;
+  color: var(--ink-800);
+  line-height: 1.5;
+}
+.crop ul li:last-child { margin-bottom: 0; }
+
+.crop ul li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 9px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--moss-300);
+}
+
+.crop .field-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-600);
+  margin: 12px 0 6px;
+  letter-spacing: 0.02em;
+}
+
+.crop .warning {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: var(--ground-100);
+  border-radius: var(--radius);
+  font-size: 13px;
+  color: var(--ink-700);
+}
+
+.zone-footnote {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--rule);
+  font-size: 12px;
+  color: var(--ink-500);
+  line-height: 1.5;
+}
+
+/* No-match */
+.nomatch {
+  background: #fff;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 28px;
+}
+
+.nomatch h2 {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0 0 10px;
+  color: var(--ink-900);
+}
+
+.nomatch p {
+  margin: 0 0 20px;
+  color: var(--ink-700);
+  font-size: 15px;
+}
+
+.zone-pick {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--ground-100);
+}
+.zone-pick:last-of-type { border-bottom: none; padding-bottom: 0; }
+
+.zone-pick button {
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--accent);
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--moss-300);
+  text-decoration-thickness: 1px;
+  display: inline;
+  margin-bottom: 4px;
+}
+.zone-pick button:hover { text-decoration-color: var(--accent); }
+
+.zone-pick .places {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--ink-500);
+}
+
+/* Footer */
+.foot {
+  margin-top: 48px;
+  padding-top: 20px;
+  border-top: 1px solid var(--rule);
+  font-size: 12px;
+  color: var(--ink-500);
+  line-height: 1.6;
+}
+.foot a { color: var(--ink-700); text-decoration: underline; text-decoration-color: var(--ink-400); }
+.foot a:hover { text-decoration-color: var(--ink-700); }
+
+@media (max-width: 520px) {
+  .shell { padding: 32px 20px 64px; }
+  .masthead h1 { font-size: 24px; }
+  .zone-name { font-size: 26px; }
+  .zone-card, .nomatch { padding: 22px 20px; }
+  .conditions { grid-template-columns: 1fr; gap: 10px; }
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <header class="masthead">
+    <h1>Plant, Set &amp; Forget — Hawaiʻi Zone Finder</h1>
+    <p class="orient">A public food-sovereignty resource. Enter your Hawaiʻi town or area to find your planting zone and what will thrive — <em>ʻulu</em> (breadfruit) and <em>kalo</em> (taro) — with cited guidance from Tam Hunt's PS&amp;F zone guides.</p>
+  </header>
+
+  <section class="finder">
+    <label for="query">Enter your Hawaiʻi town or area</label>
+    <div class="finder-row">
+      <input id="query" type="text" autocomplete="off" placeholder="e.g. Hilo, Volcano, Kailua-Kona…">
+      <button id="find-btn" type="button">Find my zone</button>
+    </div>
+    <p class="finder-hint">Covers clearly-zoned places on Hawaiʻi Island, Maui, and Oʻahu.</p>
+  </section>
+
+  <section id="result" class="state" aria-live="polite"></section>
+
+  <footer class="foot">
+    Guidance drawn from the Plant, Set &amp; Forget zone guides by Tam Hunt, part of the Hawaiʻi Island Food Security Initiative (Think B.I.G. Hawaiʻi and The Food Basket). Additional reference: CTAHR Cooperative Extension <em>Home Garden Vegetable: Upland Taro</em> (HGV-18, Oct. 1998). Every claim on this page traces to one of those sources.
+  </footer>
+
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // Normalization: lowercase, trim, collapse spaces, strip diacritics & ʻokina
+  function norm(s) {
+    return s.toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[ʻ\u2018\u2019\u02bb\u0060\u00b4'']/g, '')
+      .replace(/[\u2013\u2014]/g, '-')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  // Town → zone baked table. Only clearly-zoned places; no guesses.
+  var TOWNS = [
+    // Zone 1 — Windward Coast
+    { z: 1, n: 'Hilo' },
+    { z: 1, n: 'Keaau' },
+    { z: 1, n: 'Pahoa' },
+    { z: 1, n: 'Homomu' },
+    { z: 1, n: 'Papaikou' },
+    { z: 1, n: 'Hamakua coast' },
+    { z: 1, n: 'Hamakua' },
+    { z: 1, n: 'Hana Maui' },
+    { z: 1, n: 'Hana' },
+    { z: 1, n: 'North Kohala windward' },
+    // Zone 2 — Leeward Coast
+    { z: 2, n: 'Kailua-Kona' },
+    { z: 2, n: 'Kailua Kona' },
+    { z: 2, n: 'Kona' },
+    { z: 2, n: 'Waikoloa' },
+    { z: 2, n: 'Kawaihae' },
+    { z: 2, n: 'Kihei Maui' },
+    { z: 2, n: 'Kihei' },
+    { z: 2, n: 'Waianae Oahu' },
+    { z: 2, n: 'Waianae' },
+    // Zone 3 — Upland Rainy
+    { z: 3, n: 'Volcano' },
+    { z: 3, n: 'Honokaa' },
+    { z: 3, n: 'Ahualoa' },
+    { z: 3, n: 'Glenwood' },
+    { z: 3, n: 'Mountain View' },
+    { z: 3, n: 'Kurtistown' },
+    { z: 3, n: 'Waimea' },
+    { z: 3, n: 'Upper Puna' }
+  ];
+
+  var ZONES = {
+    1: {
+      name: 'Windward Coast',
+      tag: 'Low elevation · high rainfall · trade-wind-facing east &amp; north coasts',
+      condElev: 'Sea level – 500 ft',
+      condRain: '80–180 in / year',
+      condSun: 'Warm, lush, humid',
+      towns: 'Hilo, Keaʻau, Pāhoa, Honomū, Pāpaʻikou, Hāmākua coast, Hāna (Maui), North Kohala windward',
+      prov: 'According to Tam Hunt\u2019s Plant, Set &amp; Forget zone guides — Zone 1: Windward Coast (Hilo, Puna &amp; East Hawaiʻi Coast).',
+      ulu: {
+        yield: '400 lbs/year from 2 trees',
+        terrain: 'Adaptable — loves windward humidity',
+        note: 'Abundant natural rainfall does much of the work; the chief challenges on the windward side are drainage (too much rain can rot roots), coastal wind exposure, and lava terrain with little natural soil.',
+        prep: [
+          'Prepare wide planting area: 3 ft wide, no deeper than root ball',
+          'In lava: break through to soil pockets or build up with imported material',
+          'Backfill with native soil; apply compost as 3–4" surface mulch only',
+          'Plant at or slightly above grade to prevent trunk rot'
+        ],
+        set: [
+          'Plant root ball at or just above grade (2–3" above if drainage is poor)',
+          'Space trees 25–30 ft apart — they get very large',
+          'Stake young trees in coastal wind zones',
+          'Mulch 4–6" wide; keep 8" clear from trunk'
+        ],
+        water: [
+          'Water 2–3×/week first year; then rainfall sufficient in Puna',
+          'Once established (1–2 years), most need little or no supplemental water'
+        ],
+        timeline: 'First fruit in 3–5 years; peak production 5–50+ years.',
+        warning: 'Roots can be aggressive — plant away from structures.'
+      },
+      kalo: {
+        yield: '40 lbs/year from 20 huli',
+        terrain: 'Wetland or dryland — both viable',
+        note: 'Consistent moisture is critical for dryland taro; windward rainfall makes both wetland (loʻi) and dryland (māla) productive.',
+        prep: [
+          'DRYLAND (māla): rich, moist soil at grade — no deep excavation needed',
+          'Prepare wide, flat planting area with moisture-retaining mix',
+          'Add coir or peat to help retain moisture in lava terrain',
+          'WETLAND (loʻi): traditional flooded paddies for best yields'
+        ],
+        set: [
+          'Plant huli (tops) at grade or 2" above, 18" apart',
+          'Partial shade okay — under banana canopy works great',
+          'Consistent moisture critical for dryland taro',
+          'Mulch heavily to retain water'
+        ],
+        water: [
+          'Windward rainfall generally supplies consistent moisture for dryland taro',
+          'Wetland (loʻi) cultivation relies on the natural water flow traditional to windward valleys'
+        ],
+        timeline: 'Harvest: 9–15 months (leaves edible earlier!). Replant huli tops for continuous harvest.',
+        warning: 'Cook thoroughly before eating. Kalo is the elder sibling of the Hawaiian people — handle with respect.'
+      },
+      foot: 'Source: PS&amp;F Zone 1 — Windward Coast (Tam Hunt), Hilo, Puna &amp; East Hawaiʻi Coast. Hawaiʻi Island Food Security Initiative (Think B.I.G. Hawaiʻi &amp; The Food Basket).'
+    },
+    2: {
+      name: 'Leeward Coast',
+      tag: 'Low elevation · low rainfall · west &amp; south coasts in the rain shadow',
+      condElev: 'Sea level – 500 ft',
+      condRain: '10–70 in / year',
+      condSun: 'Hot, sunny, dry',
+      towns: 'Kailua-Kona, Waikoloa, Kawaihae, Kīhei (Maui), Waiʻanae (Oʻahu)',
+      prov: 'According to Tam Hunt\u2019s Plant, Set &amp; Forget zone guides — Zone 2: Leeward Coast (Kona, Kohala, South Point &amp; West Hawaiʻi Coast).',
+      ulu: {
+        yield: '400 lbs/year from 2 trees',
+        terrain: 'Adaptable — needs supplemental water in dry zones',
+        note: 'Water management is the central challenge. With only 10–40 inches of annual rainfall in most leeward areas (40–70 in mid-Kona and higher elevations), irrigation is essential for establishment and sometimes beyond.',
+        prep: [
+          'Large tree = large planting area: 3 ft wide, no deeper than root ball',
+          'In lava: break through to find soil pockets, or build up with imported material',
+          'Backfill with native soil; apply compost as surface mulch',
+          'Plant at or just above grade'
+        ],
+        set: [
+          'Space trees 25–30 ft apart (they get BIG!)',
+          'Stake young trees in leeward wind zones',
+          'Mulch heavily: 4–6" wood chips, keep 8" from trunk'
+        ],
+        water: [
+          'Water 2–3×/week first 2 years on the dry side — essential here',
+          'Drip irrigation highly recommended for dry leeward establishment',
+          'Deep, infrequent watering encourages deep root growth; avoid shallow daily watering',
+          'Once established (2–3 years for trees), many survive on rainfall plus occasional supplemental irrigation'
+        ],
+        timeline: 'First fruit: 3–5 years; peak production 5–50+ years.',
+        warning: 'Roots can be aggressive — plant away from structures.'
+      },
+      kalo: {
+        yield: 'See CTAHR HGV-18',
+        terrain: 'Dryland (māla) suited to leeward with irrigation',
+        note: 'Taro is an important food crop in Hawaiʻi, grown under two cultural systems: upland (dryland) taro in non-flooded, rainfed areas, and lowland (wetland) taro in waterlogged or flooded fields. On the leeward coast, dryland cultivation with irrigation is the practical path.',
+        prep: [
+          'Leeward lava soils tend to be less developed than windward — prepare wide planting areas 2–3× the root ball diameter',
+          'Apply 3–4 inches of wood chip mulch — critical for moisture retention in dry conditions',
+          'Backfill with native soil; apply compost as surface mulch rather than mixing into the planting hole'
+        ],
+        set: [
+          'Plant at or slightly above grade',
+          'Good drainage but consistent moisture — plan irrigation before planting',
+          'Mulch very heavily to retain moisture'
+        ],
+        water: [
+          'Irrigation essential — drip recommended; deep, infrequent watering over shallow daily',
+          'Observe soil moisture — don\u2019t follow a fixed schedule'
+        ],
+        timeline: 'Harvest: 9–15 months (leaves edible earlier!). Replant huli tops for continuous harvest.',
+        warning: 'Cook thoroughly before eating. Kalo is the elder sibling of the Hawaiian people — handle with respect.'
+      },
+      foot: 'Sources: PS&amp;F Zone 2 — Leeward Coast (Tam Hunt), Kona, Kohala, South Point &amp; West Hawaiʻi Coast; CTAHR Cooperative Extension, <em>Home Garden Vegetable: Upland Taro</em> (HGV-18, Oct. 1998).'
+    },
+    3: {
+      name: 'Upland Rainy',
+      tag: 'Higher elevation · cooler nights · frequent rain',
+      condElev: '500 – 3,000 ft',
+      condRain: '100–200+ in / year',
+      condSun: 'Cooler, humid, occasionally cold above 1,500 ft',
+      towns: 'Volcano, Honokaʻa, Ahualoa, Glenwood, Mountain View',
+      prov: 'According to Tam Hunt\u2019s Plant, Set &amp; Forget zone guides — Zone 3: Upland Rainy (Volcano, Waimea, Kurtistown, Mountain View, Upper Puna &amp; Hāmākua).',
+      ulu: {
+        yield: '300–400 lbs/year from 2 trees',
+        terrain: 'Adaptable — loves upland humidity',
+        note: 'Excellent upland performer up to about 1,500 ft. Moisture management and drainage are paramount at these elevations. Choose crops adapted to cooler temperatures and very high humidity.',
+        prep: [
+          'Prepare wide planting area: 3 ft wide, no deeper than root ball',
+          'In lava: break through to soil pockets or build up with imported material',
+          'Backfill with native soil; apply compost as 3–4" surface mulch only',
+          'Avoid deep planting holes filled with compost — they waterlog in high-rainfall conditions'
+        ],
+        set: [
+          'Plant root ball at grade or 2" above if drainage questionable — critical in high-rainfall uplands',
+          'Space trees 25–30 ft apart — they get large',
+          'Stake young trees — upland winds can be strong',
+          'Mulch 4–6" wide; keep 8" clear from trunk'
+        ],
+        water: [
+          'Rainfall usually sufficient — monitor for oversaturation',
+          'Focus on drainage rather than irrigation',
+          'Surface mulch (3–4" wood chips) regulates temperature and moisture'
+        ],
+        timeline: 'First fruit: 3–5 years; peak production 5–50+ years. Best performance generally below 1,500 ft elevation.',
+        warning: 'Roots can be aggressive — plant away from structures.'
+      },
+      kalo: {
+        yield: '50–80 lbs/year from 20 huli',
+        terrain: 'Wetland or dryland — high rainfall is an asset here',
+        note: 'Sacred Hawaiian staple — excellent upland performer. High rainfall makes wetland taro highly productive upland; consistent moisture is never a problem in upland rainy zones.',
+        prep: [
+          'DRYLAND (māla): rich, moist soil at grade — prepare flat, wide area',
+          'Add coir or peat to help retain moisture uniformly',
+          'WETLAND (loʻi): high rainfall makes wetland taro highly productive upland',
+          'Avoid low spots where water pools without drainage — root rot risk'
+        ],
+        set: [
+          'Plant huli at grade or 2" above, 18" apart',
+          'Partial shade excellent — under banana or ʻulu canopy ideal',
+          'Surface mulch to regulate temperature and moisture'
+        ],
+        water: [
+          'Rainfall handles irrigation — focus on drainage instead',
+          'Consistent moisture never a problem in upland rainy zones'
+        ],
+        timeline: 'Harvest: 9–15 months (leaves edible earlier!). Replant huli tops for continuous harvest.',
+        warning: 'Cook thoroughly before eating. Kalo is the elder sibling of the Hawaiian people.'
+      },
+      foot: 'Sources: PS&amp;F Zone 3 — Upland Rainy (Tam Hunt), Volcano, Waimea, Kurtistown, Mountain View, Upper Puna &amp; Hāmākua; CTAHR Cooperative Extension, <em>Home Garden Vegetable: Upland Taro</em> (HGV-18, Oct. 1998).'
+    }
+  };
+
+  function escapeHTML(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function list(items) {
+    return '<ul>' + items.map(function(i) {
+      return '<li>' + i + '</li>';
+    }).join('') + '</ul>';
+  }
+
+  function cropHTML(c) {
+    var h = '';
+    h += '<div class="crop">';
+    h += '<div class="crop-head">';
+    h += '<h3 class="crop-name">' + c.name + '</h3>';
+    h += '<span class="crop-latin">' + c.latin + '</span>';
+    h += '</div>';
+    h += '<div class="crop-tag">Yield: ' + c.yield + ' · ' + c.terrain + '</div>';
+    h += '<p class="note">' + c.note + '</p>';
+    h += '<span class="field-label">Prep</span>';
+    h += list(c.prep);
+    h += '<span class="field-label">Set</span>';
+    h += list(c.set);
+    h += '<span class="field-label">Water &amp; aftercare</span>';
+    h += list(c.water);
+    h += '<p class="note" style="margin-top:14px;margin-bottom:0;"><strong>Timeline.</strong> ' + c.timeline + '</p>';
+    if (c.warning) {
+      h += '<div class="warning">' + c.warning + '</div>';
+    }
+    h += '</div>';
+    return h;
+  }
+
+  function zoneHTML(num) {
+    var z = ZONES[num];
+    var o = '';
+    o += '<div class="zone-card">';
+    o += '<div class="zone-marker">Zone ' + num + '</div>';
+    o += '<h2 class="zone-name">' + z.name + '</h2>';
+    o += '<p class="zone-tag">' + z.tag + '</p>';
+    o += '<dl class="conditions">';
+    o += '<div class="cond"><dt>Elevation</dt><dd>' + z.condElev + '</dd></div>';
+    o += '<div class="cond"><dt>Rainfall</dt><dd>' + z.condRain + '</dd></div>';
+    o += '<div class="cond"><dt>Character</dt><dd>' + z.condSun + '</dd></div>';
+    o += '</dl>';
+    o += '<p class="provenance">' + z.prov + '</p>';
+    o += '<p class="crops-heading">What thrives here</p>';
+    o += cropHTML({
+      name: 'ʻUlu — Breadfruit', latin: 'Artocarpus altilis',
+      yield: z.ulu.yield, terrain: z.ulu.terrain, note: z.ulu.note,
+      prep: z.ulu.prep, set: z.ulu.set, water: z.ulu.water,
+      timeline: z.ulu.timeline, warning: z.ulu.warning
+    });
+    o += cropHTML({
+      name: 'Kalo — Taro', latin: 'Colocasia esculenta',
+      yield: z.kalo.yield, terrain: z.kalo.terrain, note: z.kalo.note,
+      prep: z.kalo.prep, set: z.kalo.set, water: z.kalo.water,
+      timeline: z.kalo.timeline, warning: z.kalo.warning
+    });
+    o += '<p class="zone-footnote">' + z.foot + '</p>';
+    o += '</div>';
+    return o;
+  }
+
+  function showZone(num) {
+    var el = document.getElementById('result');
+    el.innerHTML = zoneHTML(num);
+    el.classList.add('live');
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function noMatchHTML(query) {
+    var o = '';
+    o += '<div class="nomatch">';
+    o += '<h2>We couldn\u2019t place that town.</h2>';
+    o += '<p>' + (query ? 'No match for <strong>' + escapeHTML(query) + '</strong>. ' : '') + 'That doesn\u2019t mean you can\u2019t grow — it means this finder only covers places clearly assigned to a zone. Browse the three zones directly:</p>';
+    [1, 2, 3].forEach(function(n) {
+      var z = ZONES[n];
+      o += '<div class="zone-pick">';
+      o += '<button type="button" data-zone="' + n + '">Zone ' + n + ' — ' + z.name + '</button>';
+      o += '<p class="places">e.g. ' + z.towns + '</p>';
+      o += '</div>';
+    });
+    o += '</div>';
+    return o;
+  }
+
+  function find() {
+    var raw = document.getElementById('query').value;
+    var q = norm(raw);
+    var el = document.getElementById('result');
+
+    if (!q) {
+      el.classList.remove('live');
+      el.innerHTML = '';
+      return;
+    }
+
+    var match = null;
+    for (var i = 0; i < TOWNS.length; i++) {
+      if (norm(TOWNS[i].n) === q) {
+        match = TOWNS[i].z;
+        break;
+      }
+    }
+
+    if (match) {
+      showZone(match);
+    } else {
+      el.innerHTML = noMatchHTML(raw.trim());
+      el.classList.add('live');
+      // Wire pick buttons
+      var btns = el.querySelectorAll('button[data-zone]');
+      btns.forEach(function(b) {
+        b.addEventListener('click', function() {
+          showZone(parseInt(b.getAttribute('data-zone'), 10));
+        });
+      });
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }
+
+  document.getElementById('find-btn').addEventListener('click', find);
+  document.getElementById('query').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') find();
+  });
+})();
+</script>
+</body>
+</html>
