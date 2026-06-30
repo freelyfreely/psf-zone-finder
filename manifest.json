@@ -1,0 +1,66 @@
+{
+  "artifact_id": "bf5a6708-0b6a-401a-a9a2-5902d5ace880",
+  "title": "Plant, Set & Forget â€” Find Your HawaiÊ»i Planting Zone",
+  "built_at": "2026-06-29T23:32:34.578Z",
+  "destination": "deliverable",
+  "scope": "folder:projects/plant-set-forget",
+  "lens": "Designer",
+  "model": "glm-5.2",
+  "self_contained": true,
+  "no_egress": true,
+  "provenance": [
+    {
+      "n": 1,
+      "title": "PS&F Zone 3 - Upland Rainy (Tam Hunt)",
+      "author": null,
+      "origin": "upload:PSF_Zone3_Upland_Rainy.pdf",
+      "source_id": "8381d876-57dd-4149-af74-991624d15dcd"
+    },
+    {
+      "n": 2,
+      "title": "PS&F Zone 1 - Windward Coast (Tam Hunt)",
+      "author": null,
+      "origin": "upload:PSF_Zone1_Windward_Coast.docx",
+      "source_id": "ebeb2b47-722a-4f54-bd8f-3506cff379ca"
+    },
+    {
+      "n": 3,
+      "title": "PS&F Zone 2 - Leeward Coast (Tam Hunt)",
+      "author": null,
+      "origin": "upload:PSF_Zone2_Leeward_Coast.pdf",
+      "source_id": "d5393a08-4859-4f39-a85c-c2d19e5d7d5c"
+    },
+    {
+      "n": 4,
+      "title": "https://www.ctahr.hawaii.edu/oc/freepubs/pdf/HGV-18.pdf",
+      "author": null,
+      "origin": "web:https://www.ctahr.hawaii.edu/oc/freepubs/pdf/HGV-18.pdf",
+      "source_id": "32366853-ebe2-4c2e-aa0f-0cb27f1e43ec"
+    }
+  ],
+  "grounded_in": "Field Guide Zone Selector",
+  "design": {
+    "register": "be",
+    "intensity": "committed",
+    "scene": "A Big Island resident or aspiring grower lands on this page from a flyer or a link, on a phone or a laptop, wanting to know in one gesture which planting zone they live in and what will thrive there. Warm, grounded, trustworthy â€” a public food-sovereignty resource, not a brochure.",
+    "prior_artifact": "a one-page welcome card for the Plant Set & Forget project",
+    "parent_artifact": null,
+    "focus": null,
+    "spoken": null,
+    "findings": [
+      {
+        "rule": "eyebrow",
+        "severity": "p2",
+        "note": "tracked-uppercase eyebrow (small all-caps + wide letter-spacing) — AI scaffold when repeated above sections; use a different cadence",
+        "evidence": "display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(…"
+      }
+    ],
+    "refine_passes": 1,
+    "resolutions": [
+      "look:unbalanced-whitespace"
+    ],
+    "perceived": true,
+    "perceive_model": "mimo-v2.5"
+  },
+  "live_seams": []
+}
